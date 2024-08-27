@@ -14,7 +14,7 @@ import { keyRouter } from './routers/keyRouter'
 dotenv.config()
 
 const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://localhost/MELLYFASHIONdb'
+  process.env.MONGODB_URI || 'mongodb://localhost/tsamazonadb'
   mongoose.set('strictQuery', true)
   mongoose
   .connect(MONGODB_URI)

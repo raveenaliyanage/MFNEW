@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGetProductDetailsBySlugQuery } from '../hooks/productHooks'
@@ -45,7 +45,7 @@ const navigate = useNavigate()
 return isLoading ? (
  <LoadingBox />
 ) : error   ? (
- <MessageBox variant="danger">{getError(error as ApiError)}</MessageBox>
+ <MessageBox variant="danger">{getError(error as unknown as ApiError)}</MessageBox>
 ) : !product ? (
  <MessageBox variant="danger">Product Not Found</MessageBox>
 ): (

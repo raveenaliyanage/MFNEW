@@ -5,7 +5,7 @@
 
 
 import { useContext, useEffect } from 'react'
-import { Badge, Button, Container, Form, FormControl, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap'
+import { Button, Container, Form, FormControl, InputGroup, Nav, Navbar, NavDropdown } from 'react-bootstrap'
 import { Link, Outlet } from 'react-router-dom'
 import {LinkContainer} from 'react-router-bootstrap'
 import { ToastContainer } from 'react-toastify'
@@ -36,9 +36,9 @@ function App() {
     window.location.href = '/signin'
   }
 
-  function setSidebarIsOpen(arg0: boolean): void {
+  {/*function setSidebarIsOpen(arg0: boolean): void {
     throw new Error('Function not implemented.')
-  }
+  } */}
 
   return (
     <div className='d-flex flex-column vh-100'>

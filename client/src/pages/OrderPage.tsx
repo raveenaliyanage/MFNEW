@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react"
+import { useContext, useEffect, useState } from "react"
 import { Store } from "../Store"
 import { Link, useParams } from "react-router-dom"
 import { useGetOrderDetailsQuery, useGetPaypalClientIdQuery, usePayOrderMutation } from "../hooks/orderHooks"
@@ -9,12 +9,10 @@ import { Helmet } from "react-helmet-async"
 import { Button, Card, Col, ListGroup, Row } from "react-bootstrap"
 import { ApiError } from "../types/ApiError"
 import { toast } from "react-toastify"
-import { PayPalButtons, PayPalButtonsComponentProps, SCRIPT_LOADING_STATE, usePayPalScriptReducer } from "@paypal/react-paypal-js"
+import { DISPATCH_ACTION, PayPalButtons, PayPalButtonsComponentProps, SCRIPT_LOADING_STATE, usePayPalScriptReducer } from "@paypal/react-paypal-js"
 
 export default function OrderPage() {
-    const { state } = useContext(Store)
-    const { userInfo } = state
-
+  useContext(Store)
     const params = useParams()
     const { id: orderId } = params
 
@@ -23,13 +21,19 @@ export default function OrderPage() {
             error, refetch
            } = useGetOrderDetailsQuery(orderId!)
 
-    const { mutateAsync: payOrder, isLoading: loadingPay } = usePayOrderMutation()
-
-    const testPayHandler = async () => {
-      await payOrder({ orderId: orderId! })
-      refetch()
-      toast.success('Order is paid')
-    }
+           const { mutateAsync: payOrder } = usePayOrderMutation(); 
+           const [loadingPay, setLoadingPay] = useState(false);
+       
+       const testPayHandler = async () => {
+         setLoadingPay(true);
+         try {
+           await payOrder({ orderId: orderId! });
+           refetch();
+           toast.success('Order is paid');
+         } finally {
+           setLoadingPay(false);
+         }
+       };
 
     const [{ isPending, isRejected }, paypalDispatch] = usePayPalScriptReducer()
 
@@ -39,14 +43,14 @@ export default function OrderPage() {
       if (paypalConfig && paypalConfig.clientId) {
         const loadPaypalScript = async () => {
           paypalDispatch({
-            type: 'resetOptions',
+            type: DISPATCH_ACTION.RESET_OPTIONS,
             value: {
-              'client-id': paypalConfig!.clientId,
+              'clientId': paypalConfig!.clientId,
               currency: 'USD',
             },
           })
           paypalDispatch({
-            type: 'setLoadingStatus',
+            type: DISPATCH_ACTION.LOADING_STATUS,
             value: SCRIPT_LOADING_STATE.PENDING,
           })
         }
@@ -56,22 +60,24 @@ export default function OrderPage() {
 
     const paypalbuttonTransactionProps: PayPalButtonsComponentProps = {
       style: { layout: 'vertical' },
-      createOrder(data, actions) {
+      createOrder(_, actions) {
         return actions.order
         .create({
           purchase_units: [
             {
               amount: {
+                currency_code: 'USD',
                 value: order!.totalPrice.toString(),
               },
             },
           ],
+          intent: "CAPTURE"
         })
         .then((orderID: string) => {
           return orderID
         })
       },
-      onApprove(data, actions) {
+      onApprove(_, actions) {
         return actions.order!.capture().then(async (details) => {
           try {
             await payOrder({ orderId: orderId!, ...details })
@@ -91,7 +97,7 @@ export default function OrderPage() {
     return isLoading ? (
       <LoadingBox></LoadingBox>
     ) : error ? (
-       <MessageBox variant="danger">{getError(error as ApiError)}</MessageBox>
+       <MessageBox variant="danger">{getError(error as unknown as ApiError)}</MessageBox>
     ) : !order ? (
       <MessageBox variant="danger">Order Not Found</MessageBox>
     ) : (
@@ -111,15 +117,7 @@ export default function OrderPage() {
                   {order.shippingAddress.city}, {order.shippingAddress.postalCode}
                   ,{order.shippingAddress.country}
                   &nbsp;
-                  {order.shippingAddress.location &&
-                    order.shippingAddress.location.lat && (
-                      <a
-                        target="_new"
-                        href={`https://maps.google.com?q=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}`}
-                      >
-                        Show On Map
-                      </a>
-                    )}
+                  
                 </Card.Text>
                 {order.isDelivered ? (
                   <MessageBox variant="success">
@@ -232,7 +230,5 @@ export default function OrderPage() {
       </div>
     )
   }
-  function payOrder(arg0: { orderId: string }) {
-    throw new Error("Function not implemented.")
-  }
+  
 
